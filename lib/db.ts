@@ -49,9 +49,9 @@ export async function connectDB(): Promise<typeof mongoose> {
         }
       }
 
+      let conn: typeof mongoose;
       try {
-        const conn = await mongoose.connect(uri, opts);
-        return conn;
+        conn = await mongoose.connect(uri, opts);
       } catch (err) {
         console.warn("[DB] Failed to connect to MONGODB_URI, falling back to MongoMemoryServer...", err);
         const { MongoMemoryServer } = await import("mongodb-memory-server");
@@ -60,8 +60,25 @@ export async function connectDB(): Promise<typeof mongoose> {
         }
         const server = cached.mongoServer as InstanceType<typeof MongoMemoryServer>;
         const fallbackUri = server.getUri();
-        return await mongoose.connect(fallbackUri, opts);
+        conn = await mongoose.connect(fallbackUri, opts);
       }
+
+      cached.conn = conn;
+
+      if (cached.mongoServer) {
+        try {
+          const { Component } = await import("@/models/Component");
+          const count = await Component.countDocuments();
+          if (count === 0) {
+            const { seedDatabase } = await import("@/scripts/seed");
+            await seedDatabase();
+          }
+        } catch (seedErr) {
+          console.warn("[DB] Auto-seed warning:", seedErr);
+        }
+      }
+
+      return conn;
 
 
     })();

@@ -2,11 +2,14 @@ import { connectDB, disconnectDB } from "../lib/db";
 import { User } from "../models/User";
 import { Component } from "../models/Component";
 import { hashPassword } from "../lib/auth";
+import mongoose from "mongoose";
 import { initialComponents } from "./seedData";
 
 export async function seedDatabase() {
   console.log("🌱 Seeding InjectUI Database...");
-  await connectDB();
+  if (mongoose.connection.readyState !== 1) {
+    await connectDB();
+  }
 
   // 1. Seed Users
   const adminEmail = process.env.ADMIN_EMAIL || "admin@example.com";

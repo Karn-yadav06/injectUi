@@ -536,7 +536,9 @@ export function DataTable<T extends Record<string, unknown>>({
         const valA = a[sortKey];
         const valB = b[sortKey];
         if (valA === valB) return 0;
-        const compare = valA > valB ? 1 : -1;
+        if (valA === undefined || valA === null) return 1;
+        if (valB === undefined || valB === null) return -1;
+        const compare = String(valA).localeCompare(String(valB), undefined, { numeric: true });
         return sortOrder === "asc" ? compare : -compare;
       });
     }
